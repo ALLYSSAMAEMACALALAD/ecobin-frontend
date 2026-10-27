@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { api, auth } from './api.js'
+import { api } from './api.js'
 
 const AuthContext = createContext(null)
 
@@ -7,52 +7,28 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // Another tab or a failed refresh ends the session.
+  // Ask the server who is logged in (the session cookie identifies the user).
   useEffect(() => {
-    const onLogout = () => setUser(null)
-    window.addEventListener('eb:logout', onLogout)
-    return () => window.removeEventListener('eb:logout', onLogout)
-  }, [])
-
-  // On load, ask the API who the saved token belongs to.
-  useEffect(() => {
-    if (!auth.get()?.tokens) {
-      setLoading(false)
-      return
-    }
     api('/me')
-      .then((d) => {
-        if (d.user) setUser(d.user)
-        else auth.clear()
-      })
-      .catch(() => auth.clear())
+      .then((d) => setUser(d.user))
+      .catch(() => setUser(null))
       .finally(() => setLoading(false))
   }, [])
 
-  const saveSession = (data) => {
-    auth.set({ user: data.user, tokens: data.tokens })
-    setUser(data.user)
-    return data.user
-  }
-
   const login = async (email, password) => {
     const d = await api('/login', { method: 'POST', body: { email, password } })
-    return saveSession(d)
+    setUser(d.user)
+    return d.user
   }
 
   const register = async (fields) => {
     const d = await api('/register', { method: 'POST', body: fields })
-    return saveSession(d)
+    setUser(d.user)
+    return d.user
   }
 
   const logout = async () => {
-    const saved = auth.get()
-    // Revoke the refresh token on the server. Clear locally even if that fails.
-    await api('/logout', {
-      method: 'POST',
-      body: { refresh_token: saved?.tokens?.refresh_token },
-    }).catch(() => {})
-    auth.clear()
+    await api('/logout', { method: 'POST' }).catch(() => {})
     setUser(null)
   }
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { api, API_URL } from '../api.js'
+import { api } from '../api.js'
 import Alert from '../components/Alert.jsx'
 
 // Turns "Open" / "In Progress" into the CSS badge class "badge-in-progress".
@@ -41,7 +41,7 @@ export default function Reports() {
                   <td><span className={badgeClass(r.status)}>{r.status}</span></td>
                   <td>
                     {r.photo_url
-                      ? <a className="photo-link" href={`${API_URL}/${r.photo_url}`} target="_blank" rel="noopener">View</a>
+                      ? <a className="photo-link" href={`/${r.photo_url}`} target="_blank" rel="noopener">View</a>
                       : <span className="muted">None</span>}
                   </td>
                 </tr>
